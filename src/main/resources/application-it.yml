@@ -1,0 +1,24 @@
+integration:
+  intric:
+    base-url: http://localhost:${wiremock.server.port}/intric
+    api-key: some-api-key
+    oauth2:
+      username: override
+      password: override
+      token-url: http://localhost:${wiremock.server.port:}/token
+    read-timeout-in-seconds: 15
+    connect-timeout-in-seconds: 5
+  templating:
+    base-url: http://localhost:${wiremock.server.port}/templating
+    api-key: some-api-key
+    oauth2:
+      authorization-grant-type: client_credentials
+      client-id: client_id
+      client-secret: client_secret
+      token-url: http://localhost:${wiremock.server.port:}/token
+    read-timeout-in-seconds: 15
+    connect-timeout-in-seconds: 5
+ai:
+  flow:
+    step-executor:
+      async: false

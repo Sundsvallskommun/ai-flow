@@ -1,0 +1,11 @@
+{
+  "id": "${json-unit.any-string}",
+  "input": {
+	"arendenummer": [
+	  "This is a arendenummer value"
+	]
+  },
+  "state": "CREATED",
+  "stepExecutions": {},
+  "tokenCount": 8
+}

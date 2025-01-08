@@ -1,0 +1,18 @@
+{
+  "request": {
+	"method": "POST",
+	"urlPath": "/intric/services/9dda859f-f7cf-4961-9616-cdcb1c8b3d85/run/",
+	"headers": {
+	  "Authorization": {
+		"equalTo": "Bearer MTQ0NjJkZmQ5OTM2NDE1ZTZjNGZmZjI3"
+	  }
+	}
+  },
+  "response": {
+	"headers": {
+	  "Content-Type": "application/json"
+	},
+	"status": 200,
+	"bodyFileName": "test5_runStep/responses/api-intric-run.json"
+  }
+}

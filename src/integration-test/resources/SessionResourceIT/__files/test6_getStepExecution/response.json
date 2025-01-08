@@ -1,0 +1,4 @@
+{
+  "startedAt": "${json-unit.any-string}",
+  "state": "RUNNING"
+}
