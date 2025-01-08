@@ -1,7 +1,6 @@
 {
-  "name": "api-gateway",
   "request": {
-	"urlPath": "/token",
+	"urlPath": "/intric/token",
 	"method": "POST"
   },
   "response": {
@@ -9,6 +8,6 @@
 	  "Content-Type": "application/json"
 	},
 	"status": 200,
-	"bodyFileName": "test5_runStep/responses/api-gateway-token-response.json"
+	"bodyFileName": "test5_runStep/responses/api-intric-token-response.json"
   }
 }

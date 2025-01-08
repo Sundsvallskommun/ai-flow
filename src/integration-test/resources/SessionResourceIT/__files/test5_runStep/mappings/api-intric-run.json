@@ -4,7 +4,7 @@
 	"urlPath": "/intric/services/9dda859f-f7cf-4961-9616-cdcb1c8b3d85/run/",
 	"headers": {
 	  "Authorization": {
-		"equalTo": "Bearer MTQ0NjJkZmQ5OTM2NDE1ZTZjNGZmZjI3"
+		"equalTo": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzb21lSXNzdWVyIiwiaWF0IjoxNzI5NDk3NDcwLCJleHAiOjE3NjEwMzM0NzAsImF1ZCI6ImJldGEiLCJzdWIiOiJzb21lU3ViQDRmMjY5YzMzLTgyOWUtNGY1NC04ZmUzLTFkMWIwMTQ2YjE3ZC5vcmciLCJ1c2VybmFtZSI6InNvbWVVc2VyIn0.x3arr6-qOK2RtKM6_65u5TP4A0HWwy_Z5yESzt08xDU"
 	  }
 	}
   },
