@@ -9,13 +9,13 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static se.sundsvall.ai.flow.TestDataFactory.createStepExecution;
 
+import generated.intric.ai.RunService;
+import generated.intric.ai.ServiceOutput;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import se.sundsvall.ai.flow.integration.intric.model.Output;
-import se.sundsvall.ai.flow.integration.intric.model.RunService;
 import se.sundsvall.ai.flow.service.flow.ExecutionState;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,13 +33,13 @@ class IntricIntegrationTest {
 		var serviceId = stepExecution.getStep().getIntricServiceId();
 		var input = "input";
 
-		when(intricClientMock.runService(eq(serviceId), any(RunService.class))).thenReturn(new Output("new output!"));
+		when(intricClientMock.runService(eq(serviceId), any(RunService.class))).thenReturn(new ServiceOutput().output("new output!"));
 
 		integration.runService(stepExecution, input);
 
 		assertThat(stepExecution.getOutput()).isEqualTo("new output!");
 		assertThat(stepExecution.getState()).isEqualTo(ExecutionState.DONE);
-		verify(intricClientMock).runService(serviceId, new RunService(input));
+		verify(intricClientMock).runService(serviceId, new RunService().input(input));
 		verifyNoMoreInteractions(intricClientMock);
 	}
 
@@ -56,7 +56,7 @@ class IntricIntegrationTest {
 		assertThat(stepExecution.getOutput()).isEqualTo("output");
 		assertThat(stepExecution.getState()).isEqualTo(ExecutionState.ERROR);
 		assertThat(stepExecution.getErrorMessage()).isEqualTo("error");
-		verify(intricClientMock).runService(serviceId, new RunService(input));
+		verify(intricClientMock).runService(serviceId, new RunService().input(input));
 		verifyNoMoreInteractions(intricClientMock);
 	}
 

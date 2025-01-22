@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>se.sundsvall.dept44</groupId>
 		<artifactId>dept44-service-parent</artifactId>
-		<version>6.0.5</version>
+		<version>6.0.7</version>
 		<relativePath />
 		<!-- lookup parent from repository -->
 	</parent>
@@ -109,6 +109,32 @@
 					</configOptions>
 				</configuration>
 				<executions>
+					<execution>
+						<!--
+							Note: if the OpenAPI spec is updated, any instances of the string "default: {}" that exists
+							in a number of places must be removed, due to a bug in the OpenAPI generator that makes it
+							generate uncompilable code - https://github.com/OpenAPITools/openapi-generator/issues/19391
+
+							Also, alongside the input spec below there is an unmodified version of it, to be able to
+							determine which changes have been done to make it play nice with the OpenAPI generator.
+						-->
+						<id>intric-api</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>${project.basedir}/src/main/resources/integrations/intric-api.yml</inputSpec>
+							<configOptions>
+								<modelPackage>generated.intric.ai</modelPackage>
+								<!--
+									Disabled, since it (a) isn't used and (b) leads to a type/name collision since the
+									OpenAPI spec generates a "Size" enum that clashes with the Size JSR-310 constraint
+									annotation
+								-->
+								<useBeanValidation>false</useBeanValidation>
+							</configOptions>
+						</configuration>
+					</execution>
 					<execution>
 						<id>templating-api</id>
 						<goals>

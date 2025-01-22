@@ -9,6 +9,8 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import java.time.Instant;
 import java.util.List;
+
+import generated.intric.ai.AccessToken;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -17,7 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
-import se.sundsvall.ai.flow.integration.intric.model.AccessToken;
 
 @ExtendWith(MockitoExtension.class)
 class IntricTokenServiceTest {
@@ -61,7 +62,7 @@ class IntricTokenServiceTest {
 		when(mockClient.post()).thenReturn(requestBodyUriSpecMock);
 		when(requestBodyUriSpecMock.body(any(MultiValueMap.class))).thenReturn(requestBodySpecMock);
 		when(requestBodySpecMock.retrieve()).thenReturn(responseSpecMock);
-		when(responseSpecMock.toEntity(AccessToken.class)).thenReturn(ResponseEntity.ok(new AccessToken("token", "type")));
+		when(responseSpecMock.toEntity(AccessToken.class)).thenReturn(ResponseEntity.ok(new AccessToken().tokenType("type").accessToken("token")));
 
 		var jwtMock = mockStatic(JWT.class);
 		var decodedJwt = Mockito.mock(DecodedJWT.class);

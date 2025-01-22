@@ -6,6 +6,7 @@ import static org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED_VAL
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import com.auth0.jwt.JWT;
+import generated.intric.ai.AccessToken;
 import java.time.Instant;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
@@ -16,7 +17,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.zalando.problem.Problem;
 import org.zalando.problem.Status;
-import se.sundsvall.ai.flow.integration.intric.model.AccessToken;
 
 @Component
 class IntricTokenService {
@@ -52,7 +52,7 @@ class IntricTokenService {
 			var tokenResponse = retrieveToken();
 
 			token = ofNullable(tokenResponse.getBody())
-				.map(AccessToken::accessToken)
+				.map(AccessToken::getAccessToken)
 				.orElseThrow(() -> Problem.valueOf(Status.INTERNAL_SERVER_ERROR, "Unable to extract access token"));
 
 			// Decode the token to extract the expiresAt instant
