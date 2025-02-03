@@ -12,7 +12,7 @@
 	<artifactId>api-service-ai-flow</artifactId>
 	<version>2.0</version>
 	<properties>
-		<auth0.java-jwt.version>4.4.0</auth0.java-jwt.version>
+		<auth0.java-jwt.version>4.5.0</auth0.java-jwt.version>
 		<poi.version>5.4.0</poi.version>
 		<pdfbox.version>3.0.3</pdfbox.version>
 		<jtokkit.version>1.1.0</jtokkit.version>
