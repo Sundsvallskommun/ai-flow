@@ -7,10 +7,9 @@ import static org.mockito.Mockito.when;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import generated.intric.ai.AccessToken;
 import java.time.Instant;
 import java.util.List;
-
-import generated.intric.ai.AccessToken;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;

@@ -16,3 +16,6 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+#springdoc:
+#  swagger-ui:
+#    operationsSorter: method

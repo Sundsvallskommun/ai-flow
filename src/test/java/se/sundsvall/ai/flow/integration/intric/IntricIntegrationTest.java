@@ -16,7 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import se.sundsvall.ai.flow.service.flow.ExecutionState;
+import se.sundsvall.ai.flow.model.session.StepExecution;
 
 @ExtendWith(MockitoExtension.class)
 class IntricIntegrationTest {
@@ -30,7 +30,7 @@ class IntricIntegrationTest {
 	@Test
 	void runService_1() {
 		var stepExecution = createStepExecution();
-		var serviceId = stepExecution.getStep().getIntricServiceId();
+		var serviceId = stepExecution.getStep().getIntricEndpoint().id();
 		var input = "input";
 
 		when(intricClientMock.runService(eq(serviceId), any(RunService.class))).thenReturn(new ServiceOutput().output("new output!"));
@@ -38,7 +38,7 @@ class IntricIntegrationTest {
 		integration.runService(stepExecution, input);
 
 		assertThat(stepExecution.getOutput()).isEqualTo("new output!");
-		assertThat(stepExecution.getState()).isEqualTo(ExecutionState.DONE);
+		assertThat(stepExecution.getState()).isEqualTo(StepExecution.State.DONE);
 		verify(intricClientMock).runService(serviceId, new RunService().input(input));
 		verifyNoMoreInteractions(intricClientMock);
 	}
@@ -46,7 +46,7 @@ class IntricIntegrationTest {
 	@Test
 	void runService_2() {
 		var stepExecution = createStepExecution();
-		var serviceId = stepExecution.getStep().getIntricServiceId();
+		var serviceId = stepExecution.getStep().getIntricEndpoint().id();
 		var input = "input";
 
 		doThrow(new RuntimeException("error")).when(intricClientMock).runService(eq(serviceId), any(RunService.class));
@@ -54,7 +54,7 @@ class IntricIntegrationTest {
 		integration.runService(stepExecution, input);
 
 		assertThat(stepExecution.getOutput()).isEqualTo("output");
-		assertThat(stepExecution.getState()).isEqualTo(ExecutionState.ERROR);
+		assertThat(stepExecution.getState()).isEqualTo(StepExecution.State.ERROR);
 		assertThat(stepExecution.getErrorMessage()).isEqualTo("error");
 		verify(intricClientMock).runService(serviceId, new RunService().input(input));
 		verifyNoMoreInteractions(intricClientMock);

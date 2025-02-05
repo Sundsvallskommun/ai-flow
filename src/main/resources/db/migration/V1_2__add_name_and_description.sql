@@ -1,0 +1,3 @@
+ALTER TABLE `flow` MODIFY COLUMN `content` TEXT NOT NULL;
+ALTER TABLE `flow` ADD COLUMN `name` varchar(255) NOT NULL;
+ALTER TABLE `flow` ADD COLUMN `description` TEXT;

@@ -2,29 +2,29 @@ package se.sundsvall.ai.flow.service;
 
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.zalando.problem.Status.INTERNAL_SERVER_ERROR;
 import static org.zalando.problem.Status.NOT_FOUND;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.zalando.problem.Problem;
 import org.zalando.problem.Status;
-import se.sundsvall.ai.flow.integration.db.FlowEntityId;
-import se.sundsvall.ai.flow.integration.db.FlowEntityRepository;
+import se.sundsvall.ai.flow.integration.intric.IntricIntegration;
 import se.sundsvall.ai.flow.integration.templating.TemplatingIntegration;
-import se.sundsvall.ai.flow.model.Session;
-import se.sundsvall.ai.flow.model.flow.Flow;
-import se.sundsvall.ai.flow.model.flow.FlowInputRef;
-import se.sundsvall.ai.flow.model.flow.RedirectedOutput;
-import se.sundsvall.ai.flow.model.flow.Step;
-import se.sundsvall.ai.flow.service.flow.StepExecution;
+import se.sundsvall.ai.flow.model.flowdefinition.Flow;
+import se.sundsvall.ai.flow.model.session.Input;
+import se.sundsvall.ai.flow.model.session.Session;
+import se.sundsvall.ai.flow.model.flowdefinition.FlowInputRef;
+import se.sundsvall.ai.flow.model.flowdefinition.RedirectedOutput;
+import se.sundsvall.ai.flow.model.flowdefinition.Step;
+import se.sundsvall.ai.flow.model.session.StepExecution;
 
 @Service
 public class SessionService {
@@ -33,35 +33,32 @@ public class SessionService {
 
 	private final Map<UUID, Session> sessions = new ConcurrentHashMap<>();
 
-	private final FlowEntityRepository flowEntityRepository;
+	private final IntricIntegration intricIntegration;
 	private final TemplatingIntegration templatingIntegration;
-	private final ObjectMapper objectMapper;
 
-	SessionService(final FlowEntityRepository flowEntityRepository,
-		final TemplatingIntegration templatingIntegration,
-		final ObjectMapper objectMapper) {
-		this.flowEntityRepository = flowEntityRepository;
+	SessionService(final IntricIntegration intricIntegration, final TemplatingIntegration templatingIntegration) {
+		this.intricIntegration = intricIntegration;
 		this.templatingIntegration = templatingIntegration;
-		this.objectMapper = objectMapper;
 	}
 
-	public Session createSession(final String name, final Integer version) {
-		var flowEntity = flowEntityRepository.findById(new FlowEntityId(name, version))
-			.orElseThrow(() -> Problem.valueOf(NOT_FOUND, "No flow found with name " + name + " and version " + version));
+	public Session createSession(final Flow flow) {
+		var session = new Session(flow);
+		sessions.put(session.getId(), session);
+		return session;
+	}
 
-		try {
-			var flow = objectMapper.readValue(flowEntity.getContent(), Flow.class);
-			var session = new Session().withFlow(flow);
+	public void terminateSession(final UUID sessionId) {
+		var session = getSession(sessionId);
 
-			// Store the session
-			sessions.put(session.getId(), session);
-
-			return session;
-		} catch (JsonProcessingException e) {
-			LOG.error("Failed to parse flow content for flow '{}'", flowEntity.getName(), e);
-			throw Problem.valueOf(INTERNAL_SERVER_ERROR, "Failed to parse flow content for flow " + flowEntity.getName());
-		}
-
+		// Extract the id:s of the files uploaded in the session
+		var uploadedFileIds = session.getInput().values().stream()
+			.flatMap(Collection::stream)
+			.map(Input::getIntricFileId)
+			.toList();
+		// Delete the files
+		intricIntegration.deleteFiles(uploadedFileIds);
+		// Remove the session
+		sessions.remove(sessionId);
 	}
 
 	public Session getSession(final UUID sessionId) {
@@ -75,16 +72,28 @@ public class SessionService {
 		return session;
 	}
 
+	public Session addInput(final UUID sessionId, final String inputId, final MultipartFile inputMultipartFile) {
+		var session = getSession(sessionId);
+		session.addInput(inputId, inputMultipartFile);
+		return session;
+	}
+
 	public Session replaceInput(final UUID sessionId, final String inputId, final String value) {
 		var session = getSession(sessionId);
 		session.replaceInput(inputId, value);
 		return session;
 	}
 
+	public Session replaceInput(final UUID sessionId, final String inputId, final MultipartFile inputMultipartFile) {
+		var session = getSession(sessionId);
+		session.replaceInput(inputId, inputMultipartFile);
+		return session;
+	}
+
 	public StepExecution createStepExecution(final UUID sessionId, final String stepId) {
 		var session = getSession(sessionId);
 		var flow = session.getFlow();
-		var step = getStep(sessionId, stepId);
+		var step = getStep(session, stepId);
 
 		// Validate the session input refs
 		for (var stepInput : step.getInputs()) {
@@ -117,7 +126,7 @@ public class SessionService {
 
 		LOG.info("Created step execution for step '{}' from flow '{}' for session {}", step.getName(), flow.getName(), session.getId());
 
-		var stepExecution = new StepExecution(sessionId, step, requiredStepExecutions);
+		var stepExecution = new StepExecution(session, step, requiredStepExecutions);
 		session.addStepExecution(step.getId(), stepExecution);
 		return stepExecution;
 	}
@@ -128,13 +137,12 @@ public class SessionService {
 		return templatingIntegration.renderSession(session, templateId, municipalityId);
 	}
 
-	public Step getStep(final UUID sessionId, final String stepId) {
-		var session = getSession(sessionId);
+	public Step getStep(final Session session, final String stepId) {
 		var flow = session.getFlow();
 
 		return flow.getSteps().stream()
 			.filter(step -> stepId.equals(step.getId()))
 			.findFirst()
-			.orElseThrow(() -> Problem.valueOf(NOT_FOUND, "No step with '%s' exists in flow '%s' for session %s".formatted(stepId, flow.getName(), sessionId)));
+			.orElseThrow(() -> Problem.valueOf(NOT_FOUND, "No step with '%s' exists in flow '%s' for session %s".formatted(stepId, flow.getName(), session.getId())));
 	}
 }

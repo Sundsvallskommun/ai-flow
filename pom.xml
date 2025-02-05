@@ -111,7 +111,7 @@
 				<executions>
 					<execution>
 						<!--
-							Note: if the OpenAPI spec is updated, any instances of the string "default: {}" that exists
+							Note: if the OpenAPI spec is updated, any instances of the string " " that exists
 							in a number of places must be removed, due to a bug in the OpenAPI generator that makes it
 							generate uncompilable code - https://github.com/OpenAPITools/openapi-generator/issues/19391
 
@@ -148,6 +148,16 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>se.sundsvall.dept44</groupId>
+				<artifactId>dept44-formatting-plugin</artifactId>
+				<configuration>
+					<jsonExcludes>
+						<exclude>**/flows/*.json</exclude>
+						<exclude>src/integration-test/resources/**/*.json</exclude>
+					</jsonExcludes>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.jacoco</groupId>

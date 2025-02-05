@@ -9,7 +9,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static se.sundsvall.ai.flow.TestDataFactory.createFlow;
-import static se.sundsvall.ai.flow.TestDataFactory.createFlowEntity;
 import static se.sundsvall.ai.flow.TestDataFactory.createNewSession;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -17,7 +16,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.Test;
@@ -28,19 +26,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.zalando.problem.Problem;
 import org.zalando.problem.Status;
-import se.sundsvall.ai.flow.integration.db.FlowEntityRepository;
 import se.sundsvall.ai.flow.integration.templating.TemplatingIntegration;
-import se.sundsvall.ai.flow.model.Session;
-import se.sundsvall.ai.flow.model.flow.Flow;
+import se.sundsvall.ai.flow.model.session.Session;
+import se.sundsvall.ai.flow.model.flowdefinition.Flow;
 
 @ExtendWith(MockitoExtension.class)
 class SessionServiceTest {
 
 	@Mock
 	private TemplatingIntegration templatingIntegrationMock;
-
-	@Mock
-	private FlowEntityRepository flowEntityRepositoryMock;
 
 	@Mock
 	private ObjectMapper objectMapper;
@@ -50,20 +44,15 @@ class SessionServiceTest {
 
 	@Test
 	void createSession() throws JsonProcessingException {
-		var flowName = "flowName";
-		var flowVersion = 1;
 		var flow = createFlow();
 
-		when(flowEntityRepositoryMock.findById(any())).thenReturn(Optional.of(createFlowEntity()));
 		when(objectMapper.readValue("content", Flow.class)).thenReturn(flow);
 
-		var session = sessionService.createSession(flowName, flowVersion);
+		var session = sessionService.createSession(flow);
 
 		assertThat(session.getFlow()).isEqualTo(flow);
 
-		verify(flowEntityRepositoryMock).findById(any());
 		verifyNoInteractions(templatingIntegrationMock);
-
 	}
 
 	/**
@@ -71,7 +60,8 @@ class SessionServiceTest {
 	 */
 	@Test
 	void getSession_1() {
-		var session = new Session();
+		var flow = createFlow();
+		var session = new Session(flow);
 		var sessionId = session.getId();
 		ReflectionTestUtils.setField(sessionService, "sessions", new ConcurrentHashMap<>(Map.of(sessionId, session)));
 

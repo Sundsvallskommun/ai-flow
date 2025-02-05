@@ -14,10 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.jdbc.Sql;
 import se.sundsvall.ai.flow.Application;
-import se.sundsvall.ai.flow.model.Session;
+import se.sundsvall.ai.flow.model.session.Session;
+import se.sundsvall.ai.flow.model.session.StepExecution;
 import se.sundsvall.ai.flow.service.SessionService;
-import se.sundsvall.ai.flow.service.StepExecutor;
-import se.sundsvall.ai.flow.service.flow.ExecutionState;
+import se.sundsvall.ai.flow.service.Executor;
 import se.sundsvall.dept44.test.AbstractAppTest;
 import se.sundsvall.dept44.test.annotation.wiremock.WireMockAppTestSuite;
 
@@ -39,7 +39,7 @@ class SessionResourceIT extends AbstractAppTest {
 	private SessionService sessionService;
 
 	@Autowired
-	private StepExecutor stepExecutor;
+	private Executor executor;
 
 	@BeforeEach
 	void setup() {
@@ -109,7 +109,7 @@ class SessionResourceIT extends AbstractAppTest {
 
 		var stepExecution = session.getStepExecution("arendet");
 
-		await().atMost(Duration.ofSeconds(30)).until(() -> stepExecution.getState() == ExecutionState.DONE);
+		await().atMost(Duration.ofSeconds(30)).until(() -> stepExecution.getState() == StepExecution.State.DONE);
 	}
 
 	@Test
@@ -122,9 +122,9 @@ class SessionResourceIT extends AbstractAppTest {
 			"JVBERi0xLjEKJcOiw6MKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXM8PC9UeXBlL1BhZ2VzL0NvdW50IDEvS2lkc1syIDAgUl0+Pj4+CmVuZG9iagoyIDAgb2JqCjw8L1R5cGUvUGFnZS9QYXJlbnQgMSAwIFIvTWVkaWFCb3hbMCAwIDU5NCA3OTJdL1Jlc291cmNlczw8L0ZvbnQ8PC9GMSAzIDAgUj4+L1Byb2NTZXRbL1BERi9UZXh0XT4+L0NvbnRlbnRzIDQgMCBSPj4KZW5kb2JqCjMgMCBvYmoKPDwvVHlwZS9Gb250L1N1YnR5cGUvVHlwZTEvTmFtZS9GMS9CYXNlRm9udC9IZWx2ZXRpY2E+PgplbmRvYmoKNCAwIG9iago8PC9MZW5ndGggNSAwIFI+PgpzdHJlYW0KQlQKL0YxIDM2IFRmCjEgMCAwIDEgMjU1IDc1MiBUbQo0OCBUTAooIEhlbGxvKScKKFdvcmxkISknCkVUCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iago3OAplbmRvYmoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNiBmCjAwMDAwMDAwMTcgMDAwMDAgbgowMDAwMDAwMDk0IDAwMDAwIG4KMDAwMDAwMDIyOCAwMDAwMCBuCjAwMDAwMDAzMDIgMDAwMDAgbgowMDAwMDAwNDI1IDAwMDAwIG4KdHJhaWxlcgo8PC9TaXplIDYvSW5mbyA8PC9DcmVhdGlvbkRhdGUoRDoyMDIzKS9Qcm9kdWNlcihjbWQycGRmKS9UaXRsZShtaW5pLnBkZik+Pi9Sb290IDEgMCBSPj4Kc3RhcnR4cmVmCjQ0NgolJUVPRgoK");
 
 		var stepExecution = sessionService.createStepExecution(session.getId(), "arendet");
-		stepExecutor.executeStep(stepExecution);
+		executor.executeStep(stepExecution);
 
-		await().atMost(Duration.ofSeconds(30)).until(() -> stepExecution.getState() == ExecutionState.DONE);
+		await().atMost(Duration.ofSeconds(30)).until(() -> stepExecution.getState() == StepExecution.State.DONE);
 
 		// Retrieves the step execution.
 		call

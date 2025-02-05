@@ -1,76 +1,106 @@
 package se.sundsvall.ai.flow.service;
 
-import static org.springframework.web.util.UriComponentsBuilder.fromPath;
-import static org.zalando.problem.Status.INTERNAL_SERVER_ERROR;
+import static java.util.Optional.ofNullable;
 import static org.zalando.problem.Status.NOT_FOUND;
-import static se.sundsvall.ai.flow.service.FlowMapper.toFlowResponse;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.net.URI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.zalando.problem.Problem;
-import se.sundsvall.ai.flow.api.model.FlowResponse;
-import se.sundsvall.ai.flow.api.model.Flows;
-import se.sundsvall.ai.flow.integration.db.FlowEntity;
-import se.sundsvall.ai.flow.integration.db.FlowEntityId;
-import se.sundsvall.ai.flow.integration.db.FlowEntityRepository;
-import se.sundsvall.ai.flow.model.flow.Flow;
+import se.sundsvall.ai.flow.api.model.FlowSummary;
+import se.sundsvall.ai.flow.integration.db.FlowRepository;
+import se.sundsvall.ai.flow.integration.db.model.FlowEntity;
+import se.sundsvall.ai.flow.model.flowdefinition.Flow;
+import se.sundsvall.ai.flow.model.flowdefinition.exception.FlowException;
 
 @Service
+@Transactional
 public class FlowService {
 
-	private static final Logger LOG = LoggerFactory.getLogger(FlowService.class);
-
-	private final FlowEntityRepository flowEntityRepository;
 	private final ObjectMapper objectMapper;
+	private final FlowRepository flowRepository;
 
-	public FlowService(final FlowEntityRepository flowEntityRepository, final ObjectMapper objectMapper) {
-		this.flowEntityRepository = flowEntityRepository;
+	FlowService(final ObjectMapper objectMapper, final FlowRepository flowRepository) {
+		this.flowRepository = flowRepository;
 		this.objectMapper = objectMapper;
 	}
 
-	public FlowResponse getFlow(final String flowName, final int version) {
-		var flow = flowEntityRepository.findById(new FlowEntityId(flowName, version))
-			.orElseThrow(() -> Problem.valueOf(NOT_FOUND, "No flow found with name " + flowName + " and version " + version));
-
-		return toFlowResponse(flow);
+	@Transactional(readOnly = true)
+	public Flow getLatestFlowVersion(final String flowId) {
+		return flowRepository.findLatestVersionById(flowId)
+			.map(flowEntity -> fromJson(flowEntity.getContent()))
+			.orElseThrow(() -> Problem.valueOf(NOT_FOUND, "No flow found with id " + flowId));
 	}
 
-	public Flows getFlows() {
-		var flows = flowEntityRepository.findAll().stream()
-			.map(FlowMapper::toFlowSummary)
+	@Transactional(readOnly = true)
+	public Flow getFlowVersion(final String flowId, final Integer version) {
+		return flowRepository.findById(new FlowEntity.IdAndVersion(flowId, version))
+			.map(flowEntity -> fromJson(flowEntity.getContent()))
+			.orElseThrow(() -> Problem.valueOf(NOT_FOUND, "No flow found with id " + flowId + " and version " + version));
+	}
+
+	@Transactional(readOnly = true)
+	public List<FlowSummary> getFlows() {
+		return flowRepository.findAll().stream()
+			.map(this::toFlowSummary)
 			.toList();
-		return new Flows(flows);
 	}
 
-	public void deleteFlow(final String flowName, final int version) {
-		var exists = flowEntityRepository.existsById(new FlowEntityId(flowName, version));
-		if (exists) {
-			flowEntityRepository.deleteById(new FlowEntityId(flowName, version));
-		} else {
-			throw Problem.valueOf(NOT_FOUND, "No flow found with name " + flowName + " and version " + version);
+	public void deleteFlow(final String flowId) {
+		if (!flowRepository.existsById(flowId)) {
+			throw Problem.valueOf(NOT_FOUND, "No flow found with id " + flowId);
 		}
+		flowRepository.deleteById(flowId);
 	}
 
-	public URI createFlow(final Flow flow) {
+	public void deleteFlowVersion(final String flowId, final int version) {
+		if (!flowRepository.existsById(new FlowEntity.IdAndVersion(flowId, version))) {
+			throw Problem.valueOf(NOT_FOUND, "No flow found with id " + flowId + " and version " + version);
+		}
+		flowRepository.deleteById(new FlowEntity.IdAndVersion(flowId, version));
+	}
+
+	public Flow createFlow(final Flow flow) {
 		var flowEntity = new FlowEntity();
-		var newVersion = flowEntityRepository.findMaxVersionByName(flow.getName())
+		var newVersion = flowRepository.findMaxVersionById(flow.getId())
 			.map(oldVersion -> oldVersion + 1)
 			.orElse(1);
 
+		flow.setVersion(newVersion);
+
+		var content = toJson(flow);
+
+		flowRepository.save(flowEntity
+			.withId(flow.getId())
+			.withVersion(newVersion)
+			.withName(flow.getName())
+			.withDescription(flow.getDescription())
+			.withContent(content));
+
+		return flow;
+	}
+
+	FlowSummary toFlowSummary(final FlowEntity flowEntity) {
+		return ofNullable(flowEntity)
+			.map(entity -> new FlowSummary(entity.getId(), entity.getVersion(), entity.getName(), entity.getDescription()))
+			.orElse(null);
+	}
+
+	Flow fromJson(final String json) {
 		try {
-			var content = objectMapper.writeValueAsString(flow);
-			flowEntityRepository.save(flowEntity
-				.withName(flow.getName())
-				.withVersion(newVersion)
-				.withContent(content));
+			return objectMapper.readValue(json, Flow.class);
 		} catch (JsonProcessingException e) {
-			LOG.error("Flow could not be written as string", e);
-			throw Problem.valueOf(INTERNAL_SERVER_ERROR, "Flow could not be written as string");
+			throw new FlowException("Unable to deserialize flow instance from JSON", e);
 		}
-		return fromPath("/{flowName}/{version}").build(flowEntity.getName(), flowEntity.getVersion());
+	}
+
+	String toJson(final Flow flow) {
+		try {
+			return objectMapper.writeValueAsString(flow);
+		} catch (JsonProcessingException e) {
+			throw new FlowException("Unable to serialize flow instance to JSON", e);
+		}
 	}
 }

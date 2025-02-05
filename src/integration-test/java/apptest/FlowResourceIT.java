@@ -33,7 +33,7 @@ class FlowResourceIT extends AbstractAppTest {
 	@Test
 	void test2_getFlow() {
 		setupCall()
-			.withServicePath(PATH + "/Tjänsteskrivelse/1")
+			.withServicePath(PATH + "/tjansteskrivelse/1")
 			.withHttpMethod(GET)
 			.withExpectedResponseStatus(OK)
 			.withExpectedResponse(RESPONSE_FILE)

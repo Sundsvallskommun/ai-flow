@@ -1,6 +1,7 @@
-INSERT INTO flow (name, version, content)
-VALUES ('Tjänsteskrivelse', 1, '{
+INSERT INTO flow (id, version, name, description, content)
+VALUES ('tjansteskrivelse', 1, 'Tjänsteskrivelse', 'Ett Intric AI-flöde för tjänsteskrivelser', '{
   "id" : "tjansteskrivelse",
+  "version" : 1,
   "name" : "Tjänsteskrivelse",
   "description" : "Ett Intric AI-flöde för tjänsteskrivelser",
   "inputPrefix" : "#####",

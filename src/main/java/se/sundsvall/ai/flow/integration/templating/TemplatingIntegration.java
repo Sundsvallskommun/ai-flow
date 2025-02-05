@@ -7,8 +7,8 @@ import generated.se.sundsvall.templating.RenderRequest;
 import java.util.Base64;
 import java.util.HashMap;
 import org.springframework.stereotype.Component;
-import se.sundsvall.ai.flow.model.Session;
-import se.sundsvall.ai.flow.model.flow.FlowInput;
+import se.sundsvall.ai.flow.model.session.Session;
+import se.sundsvall.ai.flow.model.flowdefinition.FlowInput;
 
 @Component
 public class TemplatingIntegration {
@@ -29,7 +29,7 @@ public class TemplatingIntegration {
 		// Include any "passthrough" inputs. For now, only the first of the input values is passed
 		// on. TODO: validate the flow, making sure that multiple input cardinality isn't allowed
 		// in conjunction with passthrough set
-		session.getFlow().getInputs().stream()
+		session.getFlow().getFlowInputs().stream()
 			.filter(FlowInput::isPassthrough)
 			.forEach(passthroughInput -> {
 				var value = session.getInput().get(passthroughInput.getId());
